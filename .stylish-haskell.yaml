@@ -1,0 +1,57 @@
+# stylish-haskell configuration file
+
+steps:
+  - simple_align:
+      cases: false
+      top_level_patterns: false
+      # Principle 3
+      records: false
+
+  - imports:
+      align: global
+      list_align: with_module_name
+      pad_module_names: false
+      long_list_align: inline
+      empty_list_align: inherit
+      list_padding: 2
+      separate_lists: true
+      space_surround: false
+
+  - language_pragmas:
+      style: vertical
+      align: false
+      remove_redundant: true
+      language_prefix: LANGUAGE
+
+  - trailing_whitespace: {}
+
+columns: 80
+newline: native
+language_extensions:
+  - BangPatterns
+  - ConstraintKinds
+  - DataKinds
+  - DefaultSignatures
+  - DeriveDataTypeable
+  - DeriveGeneric
+  - ExistentialQuantification
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - LambdaCase
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - OverloadedStrings
+  - PolyKinds
+  - RecordWildCards
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - TemplateHaskell
+  - TupleSections
+  - TypeApplications
+  - TypeFamilies
+  - ViewPatterns
+  - ExplicitNamespaces
+cabal: true
