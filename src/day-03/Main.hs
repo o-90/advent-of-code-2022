@@ -4,24 +4,23 @@ import           Control.Monad (sequence)
 import           Data.List (splitAt)
 import qualified Data.Map as M
 
-createDict :: String -> M.Map Char Int
+type Cache = M.Map Char Int
+
+createDict :: String -> Cache
 createDict s = M.fromList $ zip s [1..]
 
-processStr :: M.Map Char Int -> String -> Maybe Int
+processStr :: Cache -> String -> Maybe Int
 processStr m s = M.lookup (head k) m
   where
     k = M.keys $ M.intersection ld rd
-    rd = createDict ri
-    ld = createDict li
+    [ld, rd] = map createDict [li, ri]
     (li, ri) = splitAt (length s `div` 2) s
 
-processStrs :: M.Map Char Int -> [String] -> Maybe Int
+processStrs :: Cache -> [String] -> Maybe Int
 processStrs m s = M.lookup (head k) m
   where
-    k = M.keys $ M.intersection m2 (M.intersection m0 m1)
-    m0 = createDict $ head s
-    m1 = createDict $ s !! 1
-    m2 = createDict $ s !! 2
+    k = M.keys $ M.intersection m2 $ M.intersection m0 m1
+    [m0, m1, m2] = map createDict s
 
 makeGroups :: [String] -> [[String]]
 makeGroups [] = []
