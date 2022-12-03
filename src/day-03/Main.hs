@@ -1,7 +1,7 @@
 module Main where
 
-import Data.List (splitAt)
-import Control.Monad (sequence)
+import           Control.Monad (sequence)
+import           Data.List (splitAt)
 import qualified Data.Map as M
 
 createDict :: String -> M.Map Char Int
