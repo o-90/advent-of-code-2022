@@ -40,5 +40,5 @@ main = do
   print $ sum <$> sequence outputPartOne
   -- format data for Part 2
   let outputPartTwo = map (processStrs priorityDict) $ makeGroups (lines inputs)
-  --get Part 2 sum
+  -- get Part 2 sum
   print $ sum <$> sequence outputPartTwo
