@@ -54,7 +54,9 @@ main = do
   let instructions = map (map(\w -> read w :: Int) . words) . lines $ rawInstructions
 
   -- part one answer
-  print $ foldl runner crateMap instructions
+  mapM_ (putStr . \(_, y) -> head y) $ M.toList $ foldl runner crateMap instructions
+  putStrLn ""
 
   -- part two answer
-  print $ foldl runner' crateMap instructions
+  mapM_ (putStr . \(_, y) -> head y) $ M.toList $ foldl runner' crateMap instructions
+  putStrLn ""
