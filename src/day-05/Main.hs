@@ -33,30 +33,30 @@ runner c [x, y, z] = updateCrates c x y z
 runner' :: Cache -> [Int] -> Cache
 runner' c [x, y, z] = updateCrates' c x y z
 
+getMultipleLines :: Int -> IO [String]
+getMultipleLines n
+  | n <= 0 = return []
+  | otherwise = do
+      x  <- getLine
+      xs <- getMultipleLines (n - 1)
+      let ret = x : xs
+      return ret
+
 main :: IO ()
 main = do
   -- load stacks
-  input1 <- getLine
-  input2 <- getLine
-  input3 <- getLine
-  input4 <- getLine
-  input5 <- getLine
-  input6 <- getLine
-  input7 <- getLine
-  input8 <- getLine
-  input9 <- getLine
-
-  -- TODO(o-90): this could be better
-  let crateMap = createDict $ map words [input1, input2, input3, input4, input5, input6, input7, input8, input9]
+  stacks <- getMultipleLines 9
+  -- map crates to indices
+  let crateMap = createDict $ map words stacks
 
   -- get instructions
   rawInstructions <- getContents
-  let instructions = map (map(\w -> read w :: Int) . words) . lines $ rawInstructions
+  let instructions = map (map (\ w -> read w :: Int) . words) . lines $ rawInstructions
 
   -- part one answer
-  mapM_ (putStr . \(_, y) -> head y) $ M.toList $ foldl runner crateMap instructions
+  mapM_ (putStr . \ (_, y) -> head y) $ M.toList $ foldl runner crateMap instructions
   putStrLn ""
 
   -- part two answer
-  mapM_ (putStr . \(_, y) -> head y) $ M.toList $ foldl runner' crateMap instructions
+  mapM_ (putStr . \ (_, y) -> head y) $ M.toList $ foldl runner' crateMap instructions
   putStrLn ""
