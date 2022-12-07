@@ -1,43 +1,38 @@
 module Main where
 
-import Data.Foldable (foldl')
-
-data Tree a = Node a [Tree a]
+data Tree a = Empty | Node a [Tree a]
   deriving (Show)
 
 data Info = Info {
     name   :: !String
   , parent :: !String
   , size   :: !Int
-}
+} deriving (Show)
 
 type FileTree = Tree Info
 
 insert :: FileTree -> Info -> FileTree
-insert (Node _ []) i = Node i []
+insert Empty i = Node i []
 insert (Node (Info rn rp rs) rt) (Info nn np ns)
-  | rn /= np  = Node (Info rn rp rs       ) (map insert' rt              )
-  | otherwise = Node (Info rn rp (rs + ns)) (Node (Info nn np ns) [] : rt)
+  | rn == np  = Node (Info rn rp (rs + ns)) (Node (Info nn np ns) [] : rt)
+  | otherwise = Node (Info rn rp rs       ) (map insert' rt              )
   where
     insert' = flip insert $ Info nn np ns
 
-fromList :: [Info] -> FileTree
-fromList = foldl' insert (Node (Info "$ cd /" "None" 0) [])
-
-parser :: String -> String
-parser s = case words s of
+foldc :: FileTree -> [String] -> FileTree
+foldc t []       = t
+foldc t (y : ys) = case words y of
   ["$", x, xs]
-    | xs == "/" -> "root"
-    | xs == ".." -> "stack.pop()"
-    | otherwise -> "stack.push(" ++ xs ++ ")"
-  ["$", xs] -> xs
+    | xs == "/"  -> foldc (insert t (Info "cd /" "None" 0)) ys
+    | xs == ".." -> foldc t ys
+    | otherwise  -> foldc t ys
+  ["$", xs]      -> foldc t ys
   [x, xs]
-    | x == "dir" -> xs
-    | otherwise  -> x ++ " " ++ xs
-  _ -> error "something is wrong!"
+    | x == "dir" -> foldc t ys
+    | otherwise  -> foldc (insert t (Info xs "cd /" (read x :: Int))) ys
+  _              -> foldc t ys
 
 main :: IO ()
 main = do
   inputs <- getContents
-  print $ lines inputs
-  print $ map parser $ lines inputs
+  print $ foldc Empty $ lines inputs
