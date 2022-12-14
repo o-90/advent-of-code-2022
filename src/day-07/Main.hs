@@ -1,5 +1,7 @@
 module Main where
 
+import Data.Foldable (foldl')
+
 data Tree a = Node {
     label :: a
   , size :: Int
@@ -9,14 +11,29 @@ data Tree a = Node {
 type RoseTree = Tree String
 type Info = (String, String, Int)
 
+-- empty node
+rootSeed :: RoseTree
+rootSeed = Node "/" 0 []
+
+-- construct a rose tree
 insert :: RoseTree -> Info -> RoseTree
 insert (Node cl cs ct) (np, nl, ns)
   | cl /= np  = Node cl cs (map insert' ct)
   | otherwise = Node cl cs (Node nl ns [] : ct)
   where insert' = flip insert (np, nl, ns)
 
-rootSeed :: RoseTree
-rootSeed = Node "/" 0 []
+-- custom fold left to extract and reduce-sum the size of children
+roseFoldl :: (a -> Int -> a) -> a -> [RoseTree] -> a
+roseFoldl f z [] = z
+roseFoldl f z (Node _ s _ : xs) = roseFoldl f (f z s) xs
+
+-- bottom-up update the sizes of each node
+sizes :: RoseTree -> RoseTree
+sizes tree@(Node l s []) = tree
+sizes (Node l s t) = Node l (s + s') (map sizes t)
+  where
+    s' = roseFoldl (+) 0 t'
+    t' = map sizes t
 
 -- ---------------------------------------------------------------------------
 -- -- parsing possibilitites
@@ -45,4 +62,4 @@ parser t s = go t s []
 main :: IO ()
 main = do
   inputs <- getContents
-  print $ parser rootSeed $ lines inputs
+  print $ sizes . parser rootSeed $ lines inputs
