@@ -35,6 +35,15 @@ sizes (Node l s t) = Node l (s + s') (map sizes t)
     s' = roseFoldl (+) 0 t'
     t' = map sizes t
 
+filterTree :: (Int -> Bool) -> RoseTree -> Int
+filterTree _ (Node _ _ []) = 0
+filterTree p (Node _ s t)
+  | p s       = s + s'
+  | otherwise = s'
+  where
+    s' = sum $ map ftp t
+    ftp = filterTree p
+
 -- ---------------------------------------------------------------------------
 -- -- parsing possibilitites
 -- ---------------------------------------------------------------------------
@@ -62,4 +71,4 @@ parser t s = go t s []
 main :: IO ()
 main = do
   inputs <- getContents
-  print $ sizes . parser rootSeed $ lines inputs
+  print $ filterTree (<= 100000) . sizes . parser rootSeed $ lines inputs
