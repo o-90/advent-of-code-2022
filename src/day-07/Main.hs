@@ -62,5 +62,5 @@ main = do
   let tree = sumTree . parser rootSeed $ lines inputs
   -- part one
   print $ sum . filterTree (<= 100000) $ tree
-  --part two
+  -- part two
   print $ minimum . filterTree (>= 30000000 - (70000000 - extractRoot tree)) $ tree
