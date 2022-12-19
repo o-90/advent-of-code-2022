@@ -1,7 +1,5 @@
 module Main where
 
-import Data.Foldable (foldl')
-
 data Tree a = Node {
     label :: a
   , size :: Int
@@ -22,28 +20,32 @@ insert (Node cl cs ct) (np, nl, ns)
   | otherwise = Node cl cs (Node nl ns [] : ct)
   where insert' = flip insert (np, nl, ns)
 
--- custom fold left to extract and reduce-sum the size of children
-roseFoldl :: (a -> Int -> a) -> a -> [RoseTree] -> a
-roseFoldl f z [] = z
-roseFoldl f z (Node _ s _ : xs) = roseFoldl f (f z s) xs
+-- pull out the size of a node
+extract :: RoseTree -> Int
+extract (Node _ s _) = s
 
--- bottom-up update the sizes of each node
-sizes :: RoseTree -> RoseTree
-sizes tree@(Node l s []) = tree
-sizes (Node l s t) = Node l (s + s') t'
-  where
-    s' = roseFoldl (+) 0 t'
-    t' = map sizes t
+-- bottom-up update of the size of each node
+sumTree :: RoseTree -> RoseTree
+sumTree node@(Node _ _ []) = node
+sumTree (Node l s t) = Node l s' t'
+  where t' = fmap sumTree t
+        s' = sum (map extract t') + s
 
-filterTree :: (Int -> Bool) -> RoseTree -> [Int]
+-- find and return list of nodes that meet a criteria
+filterTree :: (Int-> Bool) -> RoseTree -> [Int]
 filterTree _ (Node _ _ []) = []
 filterTree p (Node _ s t)
   | p s       = s : concatMap ftp t
   | otherwise = concatMap ftp t
   where ftp = filterTree p
 
-attach :: String -> Int -> String
-attach s i = s ++ "_" ++ show i
+-- push a node name to the stack
+push :: String -> String -> String
+push l r = l ++ " " ++ r
+
+-- pop the stack when moving back a directory
+pop :: String -> String
+pop = unwords . tail . words
 
 -- ---------------------------------------------------------------------------
 -- -- parsing possibilitites
@@ -56,20 +58,20 @@ attach s i = s ++ "_" ++ show i
 -- [size] [name]  -> create a leaf
 -- ---------------------------------------------------------------------------
 parser :: RoseTree -> [String] -> RoseTree
-parser t s = go t s [] 0
+parser t s = go t s ""
   where
-    go tree ("$ cd /" : xs) [] 0 = go tree xs ["/"] 1
-    go tree ("$ cd .." : xs) (_ : zs) n = go tree xs zs (n - 1)
-    go tree (x : xs) stack@(z : zs) n = case words x of
-      ["$", "cd", p] -> go tree xs (attach p n : stack) (n + 1)
-      ["$", "ls"]    -> go tree xs stack n
-      ["dir", p]     -> go (insert tree (z, attach p n, 0)) xs stack n
-      [size, name]   -> go (insert tree (z, attach name n, read size :: Int)) xs stack n
+    go tree ("$ cd /" : xs) _ = go tree xs "/"
+    go tree ("$ cd .." : xs) stack = go tree xs (pop stack)
+    go tree (x : xs) stack = case words x of
+      ["$", "cd", p] -> go tree xs (push p stack)
+      ["$", "ls"]    -> go tree xs stack
+      ["dir", p]     -> go (insert tree (stack, push p stack, 0)) xs stack
+      [size, name]   -> go (insert tree (stack, push name stack, read size :: Int)) xs stack
       _              -> error "bork!"
-    go tree _ [] _ = tree
-    go tree [] _ _ = tree
+    go tree [] _ = tree
 
 main :: IO ()
 main = do
   inputs <- getContents
-  print $ sum $ filterTree (<= 100000) . sizes . parser rootSeed $ lines inputs
+  -- part one
+  print $ sum . filterTree (<= 100000) . sumTree . parser rootSeed $ lines inputs
