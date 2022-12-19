@@ -30,19 +30,20 @@ roseFoldl f z (Node _ s _ : xs) = roseFoldl f (f z s) xs
 -- bottom-up update the sizes of each node
 sizes :: RoseTree -> RoseTree
 sizes tree@(Node l s []) = tree
-sizes (Node l s t) = Node l (s + s') (map sizes t)
+sizes (Node l s t) = Node l (s + s') t'
   where
     s' = roseFoldl (+) 0 t'
     t' = map sizes t
 
-filterTree :: (Int -> Bool) -> RoseTree -> Int
-filterTree _ (Node _ _ []) = 0
+filterTree :: (Int -> Bool) -> RoseTree -> [Int]
+filterTree _ (Node _ _ []) = []
 filterTree p (Node _ s t)
-  | p s       = s + s'
-  | otherwise = s'
-  where
-    s' = sum $ map ftp t
-    ftp = filterTree p
+  | p s       = s : concatMap ftp t
+  | otherwise = concatMap ftp t
+  where ftp = filterTree p
+
+attach :: String -> Int -> String
+attach s i = s ++ "_" ++ show i
 
 -- ---------------------------------------------------------------------------
 -- -- parsing possibilitites
@@ -55,20 +56,20 @@ filterTree p (Node _ s t)
 -- [size] [name]  -> create a leaf
 -- ---------------------------------------------------------------------------
 parser :: RoseTree -> [String] -> RoseTree
-parser t s = go t s []
+parser t s = go t s [] 0
   where
-    go tree ("$ cd /" : xs) _ = go tree xs ["/"]
-    go tree ("$ cd .." : xs) (_ : zs) = go tree xs zs
-    go tree (x : xs) stack@(z : zs) = case words x of
-      ["$", "cd", p] -> go tree xs (p : stack)
-      ["$", "ls"]    -> go tree xs stack
-      ["dir", p]     -> go (insert tree (z, p, 0)) xs stack
-      [size, name]   -> go (insert tree (z, name, read size :: Int)) xs stack
+    go tree ("$ cd /" : xs) [] 0 = go tree xs ["/"] 1
+    go tree ("$ cd .." : xs) (_ : zs) n = go tree xs zs (n - 1)
+    go tree (x : xs) stack@(z : zs) n = case words x of
+      ["$", "cd", p] -> go tree xs (attach p n : stack) (n + 1)
+      ["$", "ls"]    -> go tree xs stack n
+      ["dir", p]     -> go (insert tree (z, attach p n, 0)) xs stack n
+      [size, name]   -> go (insert tree (z, attach name n, read size :: Int)) xs stack n
       _              -> error "bork!"
-    go tree _ [] = tree
-    go tree [] _ = tree
+    go tree _ [] _ = tree
+    go tree [] _ _ = tree
 
 main :: IO ()
 main = do
   inputs <- getContents
-  print $ filterTree (<= 100000) . sizes . parser rootSeed $ lines inputs
+  print $ sum $ filterTree (<= 100000) . sizes . parser rootSeed $ lines inputs
